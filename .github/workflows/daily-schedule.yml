@@ -1,10 +1,10 @@
-name: Daily Schedule
+name: Daily Result
 
 on:
   workflow_dispatch:
     inputs:
       date:
-        description: 'Target date (YYYYMMDD). Leave blank for today.'
+        description: 'Target date (YYYY-MM-DD). Leave blank for today.'
         required: false
         type: string
 
@@ -32,16 +32,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run daily schedule
+      - name: Run daily result
         working-directory: repo
         env:
           PYTHONPATH: .
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_KV_NAMESPACE: ${{ secrets.CF_KV_NAMESPACE }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           TARGET_DATE: ${{ inputs.date }}
         run: |
           if [ -n "$TARGET_DATE" ]; then
-            python -m pipeline.daily_schedule "$TARGET_DATE"
+            python -c "from pipeline.daily_result import run_daily_result; import os; run_daily_result(os.environ['TARGET_DATE'])"
           else
-            python -m pipeline.daily_schedule
+            python -m pipeline.daily_result
           fi

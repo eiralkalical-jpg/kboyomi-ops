@@ -45,11 +45,7 @@ jobs:
           TARGET_DATE: ${{ inputs.date }}
         run: |
           if [ -n "$TARGET_DATE" ]; then
-            python - <<'PY'
-from pipeline.predict import run_predictions
-import os
-run_predictions(os.environ["TARGET_DATE"])
-PY
+            python -c "from pipeline.predict import run_predictions; import os; run_predictions(os.environ['TARGET_DATE'])"
           else
             python -m pipeline.predict
           fi
