@@ -45,11 +45,7 @@ jobs:
           TARGET_DATE: ${{ inputs.date }}
         run: |
           if [ -n "$TARGET_DATE" ]; then
-            python - <<'PY'
-from pipeline.daily_result import run_daily_result
-import os
-run_daily_result(os.environ["TARGET_DATE"])
-PY
+            python -c "from pipeline.daily_result import run_daily_result; import os; run_daily_result(os.environ['TARGET_DATE'])"
           else
             python -m pipeline.daily_result
           fi
