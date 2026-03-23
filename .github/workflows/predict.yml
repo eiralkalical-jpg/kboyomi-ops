@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout private main repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ vars.TARGET_REPO }}
           ref: ${{ vars.TARGET_REF }}
