@@ -1,0 +1,47 @@
+name: Daily Schedule
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Target date (YYYYMMDD). Leave blank for today.'
+        required: false
+        type: string
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout private main repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.TARGET_REPO }}
+          ref: ${{ vars.TARGET_REF }}
+          token: ${{ secrets.PRIVATE_REPO_PAT }}
+          path: repo
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: repo
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run daily schedule
+        working-directory: repo
+        env:
+          PYTHONPATH: .
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          TARGET_DATE: ${{ inputs.date }}
+        run: |
+          if [ -n "$TARGET_DATE" ]; then
+            python -m pipeline.daily_schedule "$TARGET_DATE"
+          else
+            python -m pipeline.daily_schedule
+          fi
