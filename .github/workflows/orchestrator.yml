@@ -2,7 +2,7 @@ name: Orchestrator
 
 on:
   schedule:
-    - cron: '*/30 0-15 * * *'
+    - cron: '17,47 0-15 * * *'
   workflow_dispatch:
     inputs:
       date:
