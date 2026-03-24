@@ -1,0 +1,78 @@
+name: Historical Backfill
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Target date (YYYY-MM-DD)'
+        required: true
+        type: string
+      mode:
+        description: 'Backfill mode'
+        required: true
+        default: blind_predict
+        type: choice
+        options:
+          - blind_predict
+          - finalize_results
+      reset_existing_artifacts:
+        description: 'Clear existing predictions/reactions/community before blind rebuild'
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      run_community:
+        description: 'Run community scrape during blind rebuild'
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout private main repo
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ vars.TARGET_REPO }}
+          ref: ${{ vars.TARGET_REF }}
+          token: ${{ secrets.PRIVATE_REPO_PAT }}
+          path: repo
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: repo
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run historical backfill
+        working-directory: repo
+        env:
+          PYTHONPATH: .
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_KV_NAMESPACE: ${{ secrets.CF_KV_NAMESPACE }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          TARGET_DATE: ${{ inputs.date }}
+          HISTORICAL_MODE: ${{ inputs.mode }}
+          RESET_EXISTING_ARTIFACTS: ${{ inputs.reset_existing_artifacts }}
+          RUN_COMMUNITY: ${{ inputs.run_community }}
+        run: |
+          python pipeline/historical_backfill.py \
+            --date "$TARGET_DATE" \
+            --mode "$HISTORICAL_MODE" \
+            --reset-existing-artifacts "$RESET_EXISTING_ARTIFACTS" \
+            --run-community "$RUN_COMMUNITY"
