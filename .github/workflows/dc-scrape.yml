@@ -1,0 +1,48 @@
+name: DC Community Scrape
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Target date (YYYY-MM-DD)'
+        required: false
+        type: string
+
+concurrency:
+  group: dc-scrape
+  cancel-in-progress: false
+
+jobs:
+  dc-scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: ${{ vars.TARGET_REPO }}
+          ref: ${{ vars.TARGET_REF }}
+          token: ${{ secrets.PRIVATE_REPO_PAT }}
+          path: repo
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: repo
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run DC community scrape
+        working-directory: repo
+        env:
+          PYTHONPATH: .
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          TARGET_DATE: ${{ inputs.date }}
+          if [ -n "$TARGET_DATE" ]; then
+            python -m pipeline.dc_scrape "$TARGET_DATE"
+          else
+            python -m pipeline.dc_scrape
+          fi
