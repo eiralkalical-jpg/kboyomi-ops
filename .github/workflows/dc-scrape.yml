@@ -41,6 +41,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           TARGET_DATE: ${{ inputs.date }}
+        run: |
           if [ -n "$TARGET_DATE" ]; then
             python -m pipeline.dc_scrape "$TARGET_DATE"
           else
